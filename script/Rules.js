@@ -2,11 +2,11 @@
 * @Author: H-f-society
 * @Date:   2020-02-16 20:48:14
 * @Last Modified by:   H-f-society
-* @Last Modified time: 2020-02-17 22:35:09
+* @Last Modified time: 2020-02-18 02:03:59
 */
 var GameConfig = function() {
 	this.ImagePath = "image/style0/";	// 图片素材路径
-	this.ImageType = ".gif";	// 图片素材后缀
+	this.ImageType = ".gif";// 图片素材后缀
 	this.MapSize   = 700;	// canva宽高大小
 	this.GridNum   = 15;	// 单元格大小
 	this.MineNum   = 50;	// 地雷数量
@@ -117,7 +117,6 @@ canvas.onmouseup = function(e) {
 	if(e.button == 0 && config.MapFlag[x][y]=="0") {
 		if(clickCount == 0) {
 			config.createMine(new Array(x, y));
-			//config.createNum();
 			console.log(config.GameMap);
 		}
 		clickCount++;
@@ -130,6 +129,7 @@ canvas.onmouseup = function(e) {
 			for(let i=0; i<config.MinePS.length; i++) {
 				let mineX = config.MinePS[i][0];
 				let mineY = config.MinePS[i][1];
+				config.setMapFlag(mineX, mineY, "o");
 				draw.drawRole(mineY, mineX, config.GameMap[mineX][mineY]);
 			}
 		}
