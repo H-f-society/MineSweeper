@@ -2,20 +2,20 @@
 * @Author: H-f-society
 * @Date:   2020-02-16 20:48:14
 * @Last Modified by:   H-f-society
-* @Last Modified time: 2020-02-17 01:58:52
+* @Last Modified time: 2020-02-17 22:35:09
 */
 var GameConfig = function() {
-	this.ImagePath = "image/style0/";
-	this.ImageType = ".gif";
-	this.MapSize   = 700;
-	this.GridNum   = 15;
-	this.MineNum   = 50;	
-	this.dires     = [[-1, 0], [1, 0], [0, -1], [0, 1], [-1, -1], [-1, 1], [1, 1], [1, -1]];
-	this.MinePS    = new Array();
-	this.MapFlag;
-	this.GameMap;
+	this.ImagePath = "image/style0/";	// 图片素材路径
+	this.ImageType = ".gif";	// 图片素材后缀
+	this.MapSize   = 700;	// canva宽高大小
+	this.GridNum   = 15;	// 单元格大小
+	this.MineNum   = 50;	// 地雷数量
+	this.dires     = [[-1, 0], [1, 0], [0, -1], [0, 1], [-1, -1], [-1, 1], [1, 1], [1, -1]]; // 八个方向
+	this.MinePS    = new Array(); // 所有地雷的坐标位置,用于游戏失败时快速加载出所有地雷
+	this.MapFlag;	// 备用地图，立flag用，耗双倍空间可以换其他方法，但已经写了懒得改
+	this.GameMap;	// 游戏地图
 }
-GameConfig.prototype.InitGameMap = function() {
+GameConfig.prototype.InitGameMap = function() {	//初始化游戏地图
 	this.GameMap = new Array(this.GridNum);
 	this.MapFlag = new Array(this.GridNum);
 	for(let i=0; i<this.GridNum; i++) {
@@ -24,7 +24,7 @@ GameConfig.prototype.InitGameMap = function() {
 		this.GameMap[i].fill("0");
 		this.MapFlag[i].fill("0");
 	}
-	for(let i=0; i<this.GridNum; i++) {
+	for(let i=0; i<this.GridNum; i++) {	//对每个单元格进行图片绘制
 		for(let j=0; j<this.GridNum; j++) {
 			draw.drawRole(i, j, "grid");
 		}
@@ -34,25 +34,24 @@ GameConfig.prototype.setMapFlag = function(x, y, p) { this.MapFlag[x][y] = p; }
 GameConfig.prototype.createMine = function(point) { // 随机生成地雷位置，冲突点跳过换另一个点
 	let x = parseInt((Math.random()*this.GridNum).toString(10));
 	let y = parseInt((Math.random()*this.GridNum).toString(10));
-	if((x!=point[0] && y!=point[1]) && this.GameMap[x][y] == "0") {
-		this.MineNum--;
-		this.GameMap[x][y] = "x";
-		this.MinePS.push(new Array(x, y))
+	if((x!=point[0] && y!=point[1]) && this.GameMap[x][y] != "x") {
+		this.MineNum--;	// 每生成一个地雷数量-1
+		this.GameMap[x][y] = "x"; // 地图上标记地雷位置
+		this.createNum(new Array(x, y)); // 对雷区附件八个位置标上数字
+		this.MinePS.push(new Array(x, y));
 	}else
 		this.createMine(point);
 	if(this.MineNum > 0) this.createMine(point);
 }
-GameConfig.prototype.createNum = function() { //动态规划，地雷生成过后对雷周围的位置填入数字
-	for(let i=0; i<this.MinePS.length; i++) {
-		for(let j=0; j<this.dires.length; j++) {
-			let x = this.MinePS[i][0] + this.dires[j][0];
-			let y = this.MinePS[i][1] + this.dires[j][1];
-			if(isTransboundary(this.GameMap, x, y) && this.GameMap[x][y]!="x") {
-				this.GameMap[x][y] = parseInt(this.GameMap[x][y]) + 1 + "";
-			}
+GameConfig.prototype.createNum = function(point) { //动态规划，地雷生成过后对雷周围的位置填入数字
+	for(let j=0; j<this.dires.length; j++) {
+		let x = point[0] + this.dires[j][0];
+		let y = point[1] + this.dires[j][1];
+		if(isTransboundary(this.GameMap, x, y) && this.GameMap[x][y]!="x") {
+			this.GameMap[x][y] = parseInt(this.GameMap[x][y]) + 1 + ""; // 新增地雷时数字基础上+1
 		}
 	}
-	function isTransboundary(map, x, y) {
+	function isTransboundary(map, x, y) {	// 越界判断
 		if(x>=0 && x<map.length && y>=0 && y<map[0].length) 
 			return true;
 		return false;
@@ -74,11 +73,11 @@ GameConfig.prototype.BFS = function(point) { // 广度优先遍历空位
 			let y = ps[1] + this.dires[i][1];
 			if(isTransboundary(this.GameMap, x, y) && this.GameMap[x][y]!="x" && flag[x][y]==0) {
 				if(this.dires[i][0]*this.dires[i][1]!=0 && this.GameMap[x][y]=="0")
-					continue;
-				draw.drawRole(y, x, this.GameMap[x][y]);
-				if(this.GameMap[x][y] == "0")
+					continue;	//如果是斜对角位置为空则跳过不用打开
+				draw.drawRole(y, x, this.GameMap[x][y]); // 根据当前单元格上的表示绘制图片
+				if(this.GameMap[x][y] == "0")	// 如果空位则加入队列继续广搜
 					que.push(new Array(x, y));				
-				flag[x][y] = 1;
+				flag[x][y] = 1;	//对经过的点做flag标记，同样耗双倍空间，可以换其他写法
 				this.setMapFlag(x, y, "o");
 			}
 		}
@@ -90,7 +89,7 @@ GameConfig.prototype.BFS = function(point) { // 广度优先遍历空位
 	}
 }
 var Draw = function() {
-	this.drawRole = function(x, y, role) {
+	this.drawRole = function(x, y, role) {	// 绘制角色
 		let size = config.MapSize / config.GridNum;
 		let img = new Image();
 		img.src = config.ImagePath + role + config.ImageType;
@@ -118,7 +117,7 @@ canvas.onmouseup = function(e) {
 	if(e.button == 0 && config.MapFlag[x][y]=="0") {
 		if(clickCount == 0) {
 			config.createMine(new Array(x, y));
-			config.createNum();
+			//config.createNum();
 			console.log(config.GameMap);
 		}
 		clickCount++;
@@ -144,4 +143,4 @@ canvas.onmouseup = function(e) {
 		}
 	}
 }
-document.oncontextmenu = function(){ event.returnValue = false; }
+document.oncontextmenu = function(){ event.returnValue = false; }	// 禁用右键菜单栏
